@@ -38,6 +38,8 @@ pushd ${oneinstack_dir} > /dev/null
 
 . ./include/ngx_lua_waf.sh
 
+. ./include/zig.sh
+
 # get the out ip country
 OUTIP_STATE=$(./include/ois.${ARCH} ip_state)
 
@@ -51,11 +53,12 @@ Show_Help() {
   --composer                  Composer
   --fail2ban                  Fail2ban
   --ngx_lua_waf               Ngx_lua_waf
+  --zig                       Zig (C cross toolchain for Go CGO)
   "
 }
 
 ARG_NUM=$#
-TEMP=`getopt -o hiu --long help,install,uninstall,composer,fail2ban,ngx_lua_waf -- "$@" 2>/dev/null`
+TEMP=`getopt -o hiu --long help,install,uninstall,composer,fail2ban,ngx_lua_waf,zig -- "$@" 2>/dev/null`
 [ $? != 0 ] && echo "${CWARNING}ERROR: unknown argument! ${CEND}" && Show_Help && exit 1
 eval set -- "${TEMP}"
 while :; do
@@ -78,6 +81,9 @@ while :; do
       ;;
     --ngx_lua_waf)
       ngx_lua_waf_flag=y; shift 1
+      ;;
+    --zig)
+      zig_flag=y; shift 1
       ;;
     --)
       shift
@@ -113,11 +119,12 @@ What Are You Doing?
 \t${CMSG}1${CEND}. Install/Uninstall PHP Composer
 \t${CMSG}2${CEND}. Install/Uninstall fail2ban
 \t${CMSG}3${CEND}. Install/Uninstall ngx_lua_waf
+\t${CMSG}4${CEND}. Install/Uninstall Zig (PATH: ${zig_install_dir})
 \t${CMSG}q${CEND}. Exit
 "
     read -e -p "Please input the correct option: " Number
-    if [[ ! "${Number}" =~ ^[1-3,q]$ ]]; then
-      echo "${CFAILURE}input error! Please only input 1~3 and q${CEND}"
+    if [[ ! "${Number}" =~ ^[1-4,q]$ ]]; then
+      echo "${CFAILURE}input error! Please only input 1~4 and q${CEND}"
     else
       case "${Number}" in
         1)
@@ -146,6 +153,14 @@ What Are You Doing?
             enable_lua_waf
           elif [ "${uninstall_flag}" = 'y' ]; then
             disable_lua_waf
+          fi
+          ;;
+        4)
+          ACTION_FUN
+          if [ "${install_flag}" = 'y' ]; then
+            Install_Zig
+          elif [ "${uninstall_flag}" = 'y' ]; then
+            Uninstall_Zig
           fi
           ;;
         q)
@@ -180,6 +195,13 @@ else
       enable_lua_waf
     elif [ "${uninstall_flag}" = 'y' ]; then
       disable_lua_waf
+    fi
+  fi
+  if [ "${zig_flag}" == 'y' ]; then
+    if [ "${install_flag}" = 'y' ]; then
+      Install_Zig
+    elif [ "${uninstall_flag}" = 'y' ]; then
+      Uninstall_Zig
     fi
   fi
 fi

@@ -72,6 +72,9 @@ golang123_ver=1.23.12
 golang122_ver=1.22.12
 golang121_ver=1.21.13
 
+# Zig (https://ziglang.org/download/)
+zig_ver=0.16.0
+
 libiconv_ver=1.16
 curl_ver=8.4.0
 libmcrypt_ver=2.5.8
