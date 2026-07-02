@@ -787,6 +787,18 @@ checkDownload() {
     src_url=${DOWN_ADDR_NODE}/v${nodejs_ver}/node-v${nodejs_ver}-linux-${SYS_ARCH_n}.tar.gz && Download_src
   fi
 
+  # golang
+  if [ "${golang_flag}" == 'y' ]; then
+    if [ "${golang_method_option}" == '2' ]; then
+      echo "Download Golang binary..."
+      [ "${OUTIP_STATE}"x == "China"x ] && DOWN_ADDR_GO=https://golang.google.cn/dl || DOWN_ADDR_GO=https://go.dev/dl
+      src_url=${DOWN_ADDR_GO}/go${golang_ver}.linux-${SYS_ARCH}.tar.gz && Download_src
+    else
+      echo "Download g (Golang version manager)..."
+      src_url=https://github.com/voidint/g/releases/download/v${g_ver}/g${g_ver}.linux-${SYS_ARCH}.tar.gz && Download_src
+    fi
+  fi
+
   # pureftpd
   if [ "${pureftpd_flag}" == 'y' ]; then
     echo "Download pureftpd..."

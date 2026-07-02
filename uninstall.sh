@@ -24,6 +24,7 @@ oneinstack_dir=$(dirname "`readlink -f $0`")
 pushd ${oneinstack_dir} > /dev/null
 . ./options.conf
 . ./include/color.sh
+. ./include/check_os.sh
 . ./include/get_char.sh
 . ./include/check_dir.sh
 
@@ -49,11 +50,13 @@ Show_Help() {
   --memcached                   Uninstall Memcached-server
   --phpmyadmin                  Uninstall phpMyAdmin
   --nodejs                      Uninstall Nodejs (PATH: ${nodejs_install_dir})
+  --golang                      Uninstall Golang
+  --docker                      Uninstall Docker
   "
 }
 
 ARG_NUM=$#
-TEMP=`getopt -o hvVq --long help,version,quiet,all,web,mysql,postgresql,mongodb,php,mphp_ver:,allphp,phpcache,php_extensions:,pureftpd,redis,memcached,phpmyadmin,nodejs -- "$@" 2>/dev/null`
+TEMP=`getopt -o hvVq --long help,version,quiet,all,web,mysql,postgresql,mongodb,php,mphp_ver:,allphp,phpcache,php_extensions:,pureftpd,redis,memcached,phpmyadmin,nodejs,golang,docker -- "$@" 2>/dev/null`
 [ $? != 0 ] && echo "${CWARNING}ERROR: unknown argument! ${CEND}" && Show_Help && exit 1
 eval set -- "${TEMP}"
 while :; do
@@ -75,6 +78,8 @@ while :; do
       mongodb_flag=y
       allphp_flag=y
       nodejs_flag=y
+      golang_flag=y
+      docker_flag=y
       pureftpd_flag=y
       redis_flag=y
       memcached_flag=y
@@ -129,6 +134,12 @@ while :; do
       ;;
     --nodejs)
       nodejs_flag=y; shift 1
+      ;;
+    --golang)
+      golang_flag=y; shift 1
+      ;;
+    --docker)
+      docker_flag=y; shift 1
       ;;
     --pureftpd)
       pureftpd_flag=y; shift 1
@@ -568,6 +579,19 @@ Print_Nodejs() {
   [ -e "/etc/profile.d/nodejs.sh" ] && echo /etc/profile.d/nodejs.sh
 }
 
+Print_Golang() {
+  [ -e "${g_install_dir}" ] && echo ${g_install_dir}
+  [ -e "${golang_install_dir}" ] && echo ${golang_install_dir}
+  [ -e "/etc/profile.d/golang.sh" ] && echo /etc/profile.d/golang.sh
+  [ -e "${gopath_dir}" ] && echo ${gopath_dir}
+}
+
+Print_Docker() {
+  command -v docker >/dev/null 2>&1 && docker --version
+  [ -e /etc/docker/daemon.json ] && echo /etc/docker/daemon.json
+  [ -d "${docker_data_dir}" ] && echo ${docker_data_dir}
+}
+
 Menu() {
 while :; do
   printf "
@@ -585,12 +609,14 @@ What Are You Doing?
 \t${CMSG}10${CEND}. Uninstall Memcached
 \t${CMSG}11${CEND}. Uninstall phpMyAdmin
 \t${CMSG}12${CEND}. Uninstall Nodejs (PATH: ${nodejs_install_dir})
+\t${CMSG}13${CEND}. Uninstall Golang
+\t${CMSG}14${CEND}. Uninstall Docker
 \t${CMSG} q${CEND}. Exit
 "
   echo
   read -e -p "Please input the correct option: " Number
-  if [[ ! "${Number}" =~ ^[0-9,q]$|^1[0-3]$ ]]; then
-    echo "${CWARNING}input error! Please only input 0~12 and q${CEND}"
+  if [[ ! "${Number}" =~ ^[0-9,q]$|^1[0-4]$ ]]; then
+    echo "${CWARNING}input error! Please only input 0~14 and q${CEND}"
   else
     case "$Number" in
     0)
@@ -606,6 +632,8 @@ What Are You Doing?
       Print_openssl
       Print_phpMyAdmin
       Print_Nodejs
+      Print_Golang
+      Print_Docker
       Uninstall_status
       if [ "${uninstall_flag}" == 'y' ]; then
         Uninstall_Web
@@ -619,6 +647,8 @@ What Are You Doing?
         Uninstall_openssl
         Uninstall_phpMyAdmin
         . include/nodejs.sh; Uninstall_Nodejs
+        . include/golang.sh; Uninstall_Golang
+        . include/docker.sh; Uninstall_Docker
       else
         exit
       fi
@@ -686,6 +716,16 @@ What Are You Doing?
       Uninstall_status
       [ "${uninstall_flag}" == 'y' ] && { . include/nodejs.sh; Uninstall_Nodejs; } || exit
       ;;
+    13)
+      Print_Golang
+      Uninstall_status
+      [ "${uninstall_flag}" == 'y' ] && { . include/golang.sh; Uninstall_Golang; } || exit
+      ;;
+    14)
+      Print_Docker
+      Uninstall_status
+      [ "${uninstall_flag}" == 'y' ] && { . include/docker.sh; Uninstall_Docker; } || exit
+      ;;
     q)
       exit
       ;;
@@ -712,6 +752,8 @@ else
   [ "${memcached_flag}" == 'y' ] && Print_Memcached_server
   [ "${phpmyadmin_flag}" == 'y' ] && Print_phpMyAdmin
   [ "${nodejs_flag}" == 'y' ] && Print_Nodejs
+  [ "${golang_flag}" == 'y' ] && Print_Golang
+  [ "${docker_flag}" == 'y' ] && Print_Docker
   [ "${all_flag}" == 'y' ] && Print_openssl
   Uninstall_status
   if [ "${uninstall_flag}" == 'y' ]; then
@@ -734,6 +776,8 @@ else
     [ "${memcached_flag}" == 'y' ] && Uninstall_Memcached_server
     [ "${phpmyadmin_flag}" == 'y' ] && Uninstall_phpMyAdmin
     [ "${nodejs_flag}" == 'y' ] && { . include/nodejs.sh; Uninstall_Nodejs; }
+    [ "${golang_flag}" == 'y' ] && { . include/golang.sh; Uninstall_Golang; }
+    [ "${docker_flag}" == 'y' ] && { . include/docker.sh; Uninstall_Docker; }
     [ "${all_flag}" == 'y' ] && Uninstall_openssl
   fi
 fi

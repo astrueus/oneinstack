@@ -60,6 +60,18 @@ php84_ver=8.4.11
 # Nodejs
 nodejs_ver=20.10.0
 
+# Golang
+g_ver=1.8.0
+golang_ver=1.25.11
+
+# Golang version list (for menu, from https://go.dev/dl/)
+golang126_ver=1.26.4
+golang125_ver=1.25.11
+golang124_ver=1.24.13
+golang123_ver=1.23.12
+golang122_ver=1.22.12
+golang121_ver=1.21.13
+
 libiconv_ver=1.16
 curl_ver=8.4.0
 libmcrypt_ver=2.5.8

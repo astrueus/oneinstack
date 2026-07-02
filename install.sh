@@ -57,6 +57,11 @@ Show_Help() {
                               sourceguardian,imagick,gmagick,fileinfo,imap,ldap,calendar,phalcon,
                               yaf,yar,redis,memcached,memcache,mongodb,swoole,xdebug
   --nodejs                    Install Nodejs
+  --golang                    Install Golang
+  --golang_method [1-2]       Golang install method, 1(default): g, 2: binary package
+  --golang_option [1-6]       Golang version option
+  --golang_ver [version]      Golang version (e.g. 1.25.11)
+  --docker                    Install Docker
   --tomcat_option [1-6]       Install Tomcat version
   --jdk_option [1-3]          Install JDK version
   --db_option [0-15]          Install DB version
@@ -73,7 +78,7 @@ Show_Help() {
   "
 }
 ARG_NUM=$#
-TEMP=`getopt -o hvV --long help,version,nginx_option:,apache,apache_mode_option:,apache_mpm_option:,php_option:,mphp_ver:,mphp_addons,phpcache_option:,php_extensions:,nodejs,tomcat_option:,jdk_option:,db_option:,dbrootpwd:,dbinstallmethod:,pureftpd,redis,memcached,phpmyadmin,ssh_port:,firewall,md5sum,reboot -- "$@" 2>/dev/null`
+TEMP=`getopt -o hvV --long help,version,nginx_option:,apache,apache_mode_option:,apache_mpm_option:,php_option:,mphp_ver:,mphp_addons,phpcache_option:,php_extensions:,nodejs,golang,golang_method:,golang_option:,golang_ver:,docker,tomcat_option:,jdk_option:,db_option:,dbrootpwd:,dbinstallmethod:,pureftpd,redis,memcached,phpmyadmin,ssh_port:,firewall,md5sum,reboot -- "$@" 2>/dev/null`
 [ $? != 0 ] && echo "${CWARNING}ERROR: unknown argument! ${CEND}" && Show_Help && exit 1
 eval set -- "${TEMP}"
 while :; do
@@ -192,6 +197,47 @@ while :; do
     [ -e "${nodejs_install_dir}/bin/node" ] && {
       echo "${CWARNING}Nodejs already installed! ${CEND}"
       unset nodejs_flag
+    }
+    ;;
+  --golang)
+    golang_flag=y
+    shift 1
+    [ -e "${g_install_dir}/bin/g" ] && {
+      echo "${CWARNING}Golang (g) already installed! ${CEND}"
+      unset golang_flag
+    }
+    [ -e "${golang_install_dir}/bin/go" ] && {
+      echo "${CWARNING}Golang already installed! ${CEND}"
+      unset golang_flag
+    }
+    ;;
+  --golang_method)
+    golang_method_option=$2
+    shift 2
+    [[ ! ${golang_method_option} =~ ^[1-2]$ ]] && {
+      echo "${CWARNING}golang_method input error! Please only input number 1~2${CEND}"
+      exit 1
+    }
+    ;;
+  --golang_option)
+    golang_option=$2
+    shift 2
+    [[ ! ${golang_option} =~ ^[1-6]$ ]] && {
+      echo "${CWARNING}golang_option input error! Please only input number 1~6${CEND}"
+      exit 1
+    }
+    ;;
+  --golang_ver)
+    golang_ver=$2
+    golang_ver_explicit=y
+    shift 2
+    ;;
+  --docker)
+    docker_flag=y
+    shift 1
+    command -v docker >/dev/null 2>&1 && {
+      echo "${CWARNING}Docker already installed! ${CEND}"
+      unset docker_flag
     }
     ;;
   --tomcat_option)
@@ -836,6 +882,61 @@ if [ ${ARG_NUM} == 0 ]; then
     fi
   done
 
+  # check Golang
+  while :; do echo
+    read -e -p "Do you want to install Golang? [y/n]: " golang_flag
+    if [[ ! ${golang_flag} =~ ^[y,n]$ ]]; then
+      echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
+    else
+      [ "${golang_flag}" == 'y' -a -e "${g_install_dir}/bin/g" ] && { echo "${CWARNING}Golang (g) already installed! ${CEND}"; unset golang_flag; }
+      [ "${golang_flag}" == 'y' -a -e "${golang_install_dir}/bin/go" ] && { echo "${CWARNING}Golang already installed! ${CEND}"; unset golang_flag; }
+      break
+    fi
+  done
+  if [ "${golang_flag}" == 'y' ]; then
+    while :; do
+      echo
+      echo 'Please select Golang install method:'
+      echo -e "\t${CMSG}1${CEND}. Install via g (version manager, multi-version)"
+      echo -e "\t${CMSG}2${CEND}. Install binary package (single version)"
+      read -e -p "Please input a number:(Default 1 press Enter) " golang_method_option
+      golang_method_option=${golang_method_option:-1}
+      if [[ ${golang_method_option} =~ ^[1-2]$ ]]; then
+        break
+      else
+        echo "${CWARNING}input error! Please only input number 1~2${CEND}"
+      fi
+    done
+    while :; do
+      echo
+      echo 'Please select Go version:'
+      echo -e "\t${CMSG}1${CEND}. Install Go-${golang126_ver}"
+      echo -e "\t${CMSG}2${CEND}. Install Go-${golang125_ver}"
+      echo -e "\t${CMSG}3${CEND}. Install Go-${golang124_ver}"
+      echo -e "\t${CMSG}4${CEND}. Install Go-${golang123_ver}"
+      echo -e "\t${CMSG}5${CEND}. Install Go-${golang122_ver}"
+      echo -e "\t${CMSG}6${CEND}. Install Go-${golang121_ver}"
+      read -e -p "Please input a number:(Default 2 press Enter) " golang_option
+      golang_option=${golang_option:-2}
+      if [[ ${golang_option} =~ ^[1-6]$ ]]; then
+        break
+      else
+        echo "${CWARNING}input error! Please only input number 1~6${CEND}"
+      fi
+    done
+  fi
+
+  # check Docker
+  while :; do echo
+    read -e -p "Do you want to install Docker? [y/n]: " docker_flag
+    if [[ ! ${docker_flag} =~ ^[y,n]$ ]]; then
+      echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
+    else
+      [ "${docker_flag}" == 'y' ] && command -v docker >/dev/null 2>&1 && { echo "${CWARNING}Docker already installed! ${CEND}"; unset docker_flag; }
+      break
+    fi
+  done
+
   # check Pureftpd
   while :; do echo
     read -e -p "Do you want to install Pure-FTPd? [y/n]: " pureftpd_flag
@@ -906,6 +1007,15 @@ OUTIP_STATE=$(./include/ois.${ARCH} ip_state)
 
 # Check download source packages
 . ./include/check_download.sh
+
+if [ "${golang_flag}" == 'y' ]; then
+  [ -z "${golang_method_option}" ] && golang_method_option=1
+  [ -z "${golang_option}" ] && golang_option=2
+  if [ "${golang_ver_explicit}" != 'y' ]; then
+    . include/golang.sh
+    Map_Golang_Ver
+  fi
+fi
 
 [ "${armplatform}" == "y" ] && dbinstallmethod=2
 checkDownload 2>&1 | tee -a ${oneinstack_dir}/install.log
@@ -1304,6 +1414,18 @@ if [ "${nodejs_flag}" == 'y' ]; then
   Install_Nodejs 2>&1 | tee -a ${oneinstack_dir}/install.log
 fi
 
+# Golang
+if [ "${golang_flag}" == 'y' ]; then
+  . include/golang.sh
+  Install_Golang 2>&1 | tee -a ${oneinstack_dir}/install.log
+fi
+
+# Docker
+if [ "${docker_flag}" == 'y' ]; then
+  . include/docker.sh
+  Install_Docker 2>&1 | tee -a ${oneinstack_dir}/install.log
+fi
+
 # Pure-FTPd
 if [ "${pureftpd_flag}" == 'y' ]; then
   . include/pureftpd.sh
@@ -1381,6 +1503,14 @@ echo "Total OneinStack Install Time: ${CQUESTION}${installTime}${CEND} minutes"
 [ "${phpmyadmin_flag}" == 'y' ] && echo "$(printf "%-32s" "phpMyAdmin Control Panel URL:")${CMSG}http://${IPADDR}/phpMyAdmin${CEND}"
 [ "${redis_flag}" == 'y' ] && echo -e "\n$(printf "%-32s" "redis install dir:")${CMSG}${redis_install_dir}${CEND}"
 [ "${memcached_flag}" == 'y' ] && echo -e "\n$(printf "%-32s" "memcached install dir:")${CMSG}${memcached_install_dir}${CEND}"
+[ "${golang_flag}" == 'y' ] && [ "${golang_method_option}" == '2' ] && echo -e "\n$(printf "%-32s" "Golang install dir:")${CMSG}${golang_install_dir}${CEND}"
+[ "${golang_flag}" == 'y' ] && [ "${golang_method_option}" != '2' ] && echo -e "\n$(printf "%-32s" "g install dir:")${CMSG}${g_install_dir}${CEND}"
+[ "${golang_flag}" == 'y' ] && echo "$(printf "%-32s" "GOPATH:")${CMSG}${gopath_dir}${CEND}"
+[ "${golang_flag}" == 'y' ] && echo "$(printf "%-32s" "Go version:")${CMSG}$(go version 2>/dev/null)${CEND}"
+[ "${golang_flag}" == 'y' ] && [ "${golang_method_option}" != '2' ] && echo "$(printf "%-32s" "Version manager:")${CMSG}g (g ls / g install / g use)${CEND}"
+[ "${docker_flag}" == 'y' ] && echo -e "\n$(printf "%-32s" "Docker version:")${CMSG}$(docker --version 2>/dev/null)${CEND}"
+[ "${docker_flag}" == 'y' ] && echo "$(printf "%-32s" "Docker data dir:")${CMSG}${docker_data_dir}${CEND}"
+[ "${docker_flag}" == 'y' ] && echo "$(printf "%-32s" "Docker Compose:")${CMSG}$(docker compose version 2>/dev/null)${CEND}"
 if [[ ${nginx_option} =~ ^[1-4]$ ]] || [ "${apache_flag}" == 'y' ] || [[ ${tomcat_option} =~ ^[1-6]$ ]]; then
   echo -e "\n$(printf "%-32s" "Index URL:")${CMSG}http://${IPADDR}/${CEND}"
 fi
