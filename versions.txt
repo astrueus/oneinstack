@@ -75,6 +75,17 @@ golang121_ver=1.21.13
 # Zig (https://ziglang.org/download/)
 zig_ver=0.16.0
 
+# SoftEther VPN Server (menu order: low to high, default option 4)
+# Stable: https://github.com/SoftEtherVPN/SoftEtherVPN_Stable
+# Developer: https://github.com/SoftEtherVPN/SoftEtherVPN
+softether_ver=4.44-9807-rtm
+softether438_rtm_ver=4.38-9760-rtm
+softether441_rtm_ver=4.41-9787-rtm
+softether442_rtm_ver=4.42-9798-rtm
+softether444_rtm_ver=4.44-9807-rtm
+softether501_ver=5.01.9674
+softether502_ver=5.02.5187
+
 libiconv_ver=1.16
 curl_ver=8.4.0
 libmcrypt_ver=2.5.8
