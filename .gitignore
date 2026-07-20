@@ -1,4 +1,4 @@
 install.log
 
-.idea/
-.cursor/
+.idea
+.cursor
